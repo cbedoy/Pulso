@@ -1,7 +1,5 @@
 package com.mx.weartwo.presentation.metronome
 
-import android.content.Context
-import android.os.Vibrator
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,13 +11,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.Button
@@ -35,22 +33,42 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.mx.weartwo.R
+import com.mx.weartwo.domain.model.MetronomeState
 
 @Composable
-fun MetronomeScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val controller = remember {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        MetronomeController(scope, ClickPlayer(), vibrator)
-    }
+fun MetronomeScreen(
+    onBack: () -> Unit,
+    viewModel: MetronomeViewModel = viewModel(),
+) {
+    val state by viewModel.state.collectAsState()
 
-    DisposableEffect(controller) {
-        onDispose { controller.dispose() }
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.stop() }
     }
 
     BackHandler(onBack = onBack)
 
+    MetronomeContent(
+        state = state,
+        onDecreaseBpm = viewModel::decreaseBpm,
+        onIncreaseBpm = viewModel::increaseBpm,
+        onPreviousTimeSignature = viewModel::previousTimeSignature,
+        onNextTimeSignature = viewModel::nextTimeSignature,
+        onHapticsChange = viewModel::setHapticsEnabled,
+        onToggle = viewModel::toggle,
+    )
+}
+
+@Composable
+fun MetronomeContent(
+    state: MetronomeState,
+    onDecreaseBpm: () -> Unit,
+    onIncreaseBpm: () -> Unit,
+    onPreviousTimeSignature: () -> Unit,
+    onNextTimeSignature: () -> Unit,
+    onHapticsChange: (Boolean) -> Unit,
+    onToggle: () -> Unit,
+) {
     val listState = rememberTransformingLazyColumnState()
     val transformationSpec = rememberTransformationSpec()
 
@@ -70,7 +88,7 @@ fun MetronomeScreen(onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    IconButton(onClick = controller::decreaseBpm) {
+                    IconButton(onClick = onDecreaseBpm) {
                         Text(text = "−")
                     }
                     Column(
@@ -79,7 +97,7 @@ fun MetronomeScreen(onBack: () -> Unit) {
                         verticalArrangement = Arrangement.Center,
                     ) {
                         Text(
-                            text = controller.bpm.toString(),
+                            text = state.bpm.toString(),
                             style = MaterialTheme.typography.displayLarge,
                         )
                         Text(
@@ -87,7 +105,7 @@ fun MetronomeScreen(onBack: () -> Unit) {
                             style = MaterialTheme.typography.labelMedium,
                         )
                     }
-                    IconButton(onClick = controller::increaseBpm) {
+                    IconButton(onClick = onIncreaseBpm) {
                         Text(text = "+")
                     }
                 }
@@ -98,8 +116,8 @@ fun MetronomeScreen(onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    repeat(controller.beatsPerBar) { beat ->
-                        val isCurrent = beat == controller.currentBeat
+                    repeat(state.beatsPerBar) { beat ->
+                        val isCurrent = beat == state.currentBeat
                         val isAccent = beat == 0
                         val color = when {
                             isCurrent -> MaterialTheme.colorScheme.primary
@@ -120,7 +138,7 @@ fun MetronomeScreen(onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    IconButton(onClick = controller::previousTimeSignature) {
+                    IconButton(onClick = onPreviousTimeSignature) {
                         Text(text = "−")
                     }
                     Column(
@@ -129,7 +147,7 @@ fun MetronomeScreen(onBack: () -> Unit) {
                         verticalArrangement = Arrangement.Center,
                     ) {
                         Text(
-                            text = "${controller.beatsPerBar}/4",
+                            text = "${state.beatsPerBar}/4",
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
@@ -137,15 +155,15 @@ fun MetronomeScreen(onBack: () -> Unit) {
                             style = MaterialTheme.typography.labelMedium,
                         )
                     }
-                    IconButton(onClick = controller::nextTimeSignature) {
+                    IconButton(onClick = onNextTimeSignature) {
                         Text(text = "+")
                     }
                 }
             }
             item {
                 SwitchButton(
-                    checked = controller.hapticsEnabled,
-                    onCheckedChange = { controller.hapticsEnabled = it },
+                    checked = state.hapticsEnabled,
+                    onCheckedChange = onHapticsChange,
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec),
                     label = { Text(text = stringResource(R.string.vibration)) },
@@ -153,16 +171,16 @@ fun MetronomeScreen(onBack: () -> Unit) {
             }
             item {
                 Button(
-                    onClick = controller::toggle,
+                    onClick = onToggle,
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (controller.isPlaying) {
+                        containerColor = if (state.isPlaying) {
                             MaterialTheme.colorScheme.errorContainer
                         } else {
                             MaterialTheme.colorScheme.primaryContainer
                         },
-                        contentColor = if (controller.isPlaying) {
+                        contentColor = if (state.isPlaying) {
                             MaterialTheme.colorScheme.onErrorContainer
                         } else {
                             MaterialTheme.colorScheme.onPrimaryContainer
@@ -171,7 +189,7 @@ fun MetronomeScreen(onBack: () -> Unit) {
                 ) {
                     Text(
                         text = stringResource(
-                            if (controller.isPlaying) R.string.stop else R.string.start,
+                            if (state.isPlaying) R.string.stop else R.string.start,
                         ),
                     )
                 }
@@ -182,6 +200,14 @@ fun MetronomeScreen(onBack: () -> Unit) {
 
 @WearPreviewDevices
 @Composable
-private fun MetronomeScreenPreview() {
-    MetronomeScreen(onBack = {})
+private fun MetronomeContentPreview() {
+    MetronomeContent(
+        state = MetronomeState(),
+        onDecreaseBpm = {},
+        onIncreaseBpm = {},
+        onPreviousTimeSignature = {},
+        onNextTimeSignature = {},
+        onHapticsChange = {},
+        onToggle = {},
+    )
 }

@@ -1,19 +1,20 @@
-package com.mx.weartwo.presentation.metronome
+package com.mx.weartwo.data
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import com.mx.weartwo.domain.ClickOutput
 import kotlin.math.PI
 import kotlin.math.exp
 import kotlin.math.sin
 
-class ClickPlayer {
+class AudioClickOutput : ClickOutput {
 
     private val accentBuffer = generateClick(ACCENT_FREQUENCY)
     private val normalBuffer = generateClick(NORMAL_FREQUENCY)
     private var audioTrack: AudioTrack? = null
 
-    fun play(accent: Boolean) {
+    override fun play(accent: Boolean) {
         try {
             val track = audioTrack ?: createTrack().also { audioTrack = it }
             if (track.playState != AudioTrack.PLAYSTATE_PLAYING) {
@@ -25,7 +26,7 @@ class ClickPlayer {
         }
     }
 
-    fun release() {
+    override fun release() {
         audioTrack?.let {
             runCatching { it.stop() }
             it.release()

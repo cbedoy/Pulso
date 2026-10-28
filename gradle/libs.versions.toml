@@ -17,6 +17,7 @@ guava = "33.2.1-android"
 tilesTooling = "1.5.0"
 tilesToolingPreview = "1.5.0"
 watchfaceComplicationsDataSourceKtx = "1.2.1"
+lifecycle = "2.8.7"
 
 [libraries]
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
@@ -41,6 +42,7 @@ guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 tiles-tooling = { group = "androidx.wear.tiles", name = "tiles-tooling", version.ref = "tilesTooling" }
 tiles-tooling-preview = { group = "androidx.wear.tiles", name = "tiles-tooling-preview", version.ref = "tilesToolingPreview" }
 watchface-complications-data-source-ktx = { group = "androidx.wear.watchface", name = "watchface-complications-data-source-ktx", version.ref = "watchfaceComplicationsDataSourceKtx" }
+lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
