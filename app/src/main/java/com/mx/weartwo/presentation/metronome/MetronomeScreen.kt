@@ -1,6 +1,13 @@
 package com.mx.weartwo.presentation.metronome
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -99,6 +107,7 @@ fun MetronomeContent(
                         Text(
                             text = state.bpm.toString(),
                             style = MaterialTheme.typography.displayLarge,
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             text = stringResource(R.string.bpm_label),
@@ -111,6 +120,15 @@ fun MetronomeContent(
                 }
             }
             item {
+                val pulseScale by rememberInfiniteTransition(label = "pulse").animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.35f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 200),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+                    label = "pulseScale",
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
                     horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
@@ -119,15 +137,26 @@ fun MetronomeContent(
                     repeat(state.beatsPerBar) { beat ->
                         val isCurrent = beat == state.currentBeat
                         val isAccent = beat == 0
-                        val color = when {
+                        val targetColor = when {
                             isCurrent -> MaterialTheme.colorScheme.primary
                             isAccent -> MaterialTheme.colorScheme.secondary
                             else -> MaterialTheme.colorScheme.outline
                         }
+                        val dotSize by animateDpAsState(
+                            targetValue = if (isCurrent) 14.dp else 10.dp,
+                            animationSpec = tween(durationMillis = 120),
+                            label = "dotSize",
+                        )
+                        val dotColor by animateColorAsState(
+                            targetValue = targetColor,
+                            animationSpec = tween(durationMillis = 120),
+                            label = "dotColor",
+                        )
                         Box(
                             modifier = Modifier
-                                .size(if (isCurrent) 14.dp else 10.dp)
-                                .background(color = color, shape = CircleShape),
+                                .size(dotSize)
+                                .scale(if (isCurrent && state.isPlaying) pulseScale else 1f)
+                                .background(color = dotColor, shape = CircleShape),
                         )
                     }
                 }
@@ -149,6 +178,7 @@ fun MetronomeContent(
                         Text(
                             text = "${state.beatsPerBar}/4",
                             style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
                             text = stringResource(R.string.time_signature),
@@ -170,21 +200,31 @@ fun MetronomeContent(
                 )
             }
             item {
+                val containerColor by animateColorAsState(
+                    targetValue = if (state.isPlaying) {
+                        MaterialTheme.colorScheme.errorContainer
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer
+                    },
+                    animationSpec = tween(durationMillis = 200),
+                    label = "buttonContainer",
+                )
+                val contentColor by animateColorAsState(
+                    targetValue = if (state.isPlaying) {
+                        MaterialTheme.colorScheme.onErrorContainer
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    },
+                    animationSpec = tween(durationMillis = 200),
+                    label = "buttonContent",
+                )
                 Button(
                     onClick = onToggle,
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (state.isPlaying) {
-                            MaterialTheme.colorScheme.errorContainer
-                        } else {
-                            MaterialTheme.colorScheme.primaryContainer
-                        },
-                        contentColor = if (state.isPlaying) {
-                            MaterialTheme.colorScheme.onErrorContainer
-                        } else {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        },
+                        containerColor = containerColor,
+                        contentColor = contentColor,
                     ),
                 ) {
                     Text(

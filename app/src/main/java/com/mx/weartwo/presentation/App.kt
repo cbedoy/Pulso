@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.wear.compose.material3.AppScaffold
 import com.mx.weartwo.presentation.home.HomeScreen
 import com.mx.weartwo.presentation.metronome.MetronomeScreen
-import com.mx.weartwo.presentation.theme.WearTwoTheme
+import com.mx.weartwo.presentation.theme.PulsoTheme
 
 enum class Screen {
     Home,
@@ -17,7 +17,7 @@ enum class Screen {
 
 @Composable
 fun WearApp() {
-    WearTwoTheme {
+    PulsoTheme {
         AppScaffold {
             var screen by rememberSaveable { mutableStateOf(Screen.Home) }
             when (screen) {
