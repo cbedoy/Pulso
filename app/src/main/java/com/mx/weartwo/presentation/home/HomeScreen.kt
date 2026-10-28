@@ -1,13 +1,18 @@
 package com.mx.weartwo.presentation.home
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
@@ -37,6 +42,8 @@ fun HomeScreen(onMetronomeClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec),
                 ) {
+                    Text(text = "🥁")
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(text = stringResource(R.string.metronome))
                 }
             }
@@ -47,8 +54,19 @@ fun HomeScreen(onMetronomeClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec),
                 ) {
+                    Text(text = "🎵")
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(text = stringResource(R.string.note_identifier))
                 }
+            }
+            item {
+                Text(
+                    text = stringResource(R.string.app_credit),
+                    modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec),
+                    color = MaterialTheme.colorScheme.outline,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                )
             }
         }
     }
